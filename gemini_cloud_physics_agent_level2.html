@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gemini Cloud Physics Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #0a0b0f;
+  --bg2: #111318;
+  --bg3: #181b23;
+  --panel: #1c2030;
+  --panel2: #171b28;
+  --border: #2a2f42;
+  --accent: #5effa0;
+  --accent2: #4db8ff;
+  --warn: #ffb347;
+  --danger: #ff5d5d;
+  --text: #e8eaf0;
+  --muted: #7a8099;
+  --grid: rgba(94,255,160,0.045);
+  --good-bg: rgba(94,255,160,0.08);
+  --warn-bg: rgba(255,179,71,0.08);
+  --danger-bg: rgba(255,93,93,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 38px 38px;
+  pointer-events: none;
+  z-index: 0;
+}
+.wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 0 18px 64px; }
+header {
+  padding: 34px 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.logo {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  color: #091014;
+  font-size: 24px;
+  font-weight: 800;
+  box-shadow: 0 10px 28px rgba(77,184,255,0.12);
+  flex-shrink: 0;
+}
+.header-text h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+}
+.header-text h1 span { color: var(--accent); }
+.header-text p {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.badge {
+  margin-left: auto;
+  background: rgba(94,255,160,0.1);
+  border: 1px solid rgba(94,255,160,0.24);
+  color: var(--accent);
+  font-size: 0.65rem;
+  padding: 6px 11px;
+  border-radius: 999px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .badge { display: none; }
+  header { align-items: flex-start; }
+}
+.panel {
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.18);
+}
+.panel + .panel { margin-top: 20px; }
+.panel-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.69rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.panel-head .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.panel-body { padding: 18px; }
+label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+label:first-child { margin-top: 0; }
+select, input[type="number"], input[type="text"], input[type="file"] {
+  width: 100%;
+  background: var(--bg2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 11px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.78rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+select:focus, input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(94,255,160,0.08);
+}
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.range-row { display: flex; align-items: center; gap: 10px; }
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.btn {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 14px;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #38e080);
+  color: #091014;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(94,255,160,0.18);
+}
+.btn-primary:disabled { opacity: 0.45; transform: none; box-shadow: none; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+.btn-small {
+  padding: 9px 10px;
+  font-size: 0.72rem;
+  margin-top: 0;
+}
+.helper {
+  margin-top: 10px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.note {
+  background: rgba(77,184,255,0.08);
+  border: 1px solid rgba(77,184,255,0.16);
+  border-radius: 10px;
+  padding: 10px 11px;
+  margin-top: 14px;
+  color: #b2d8ff;
+  font-size: 0.68rem;
+  line-height: 1.7;
+}
+.alert-banner {
+  display: none;
+  background: rgba(255,93,93,0.08);
+  border: 1px solid rgba(255,93,93,0.22);
+  color: #ffc4c4;
+  border-radius: 10px;
+  padding: 11px 12px;
+  margin-bottom: 14px;
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+.score-ring-wrap { display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+.score-ring { position: relative; width: 132px; height: 132px; }
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring .ring-bg { fill: none; stroke: var(--border); stroke-width: 9; }
+.score-ring .ring-fill { fill: none; stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset .75s ease, stroke 0.25s ease; }
+.score-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.score-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.score-label {
+  font-size: 0.58rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.score-title {
+  margin-top: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+.score-subtext {
+  margin-top: 12px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.7;
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.metric-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+.metric-box .m-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3rem;
+  line-height: 1;
+  font-weight: 800;
+}
+.metric-box .m-label {
+  margin-top: 5px;
+  font-size: 0.62rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.good { color: var(--accent); }
+.warn { color: var(--warn); }
+.danger { color: var(--danger); }
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.summary-card {
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  border-radius: 12px;
+  padding: 14px;
+  line-height: 1.7;
+  font-size: 0.74rem;
+}
+.summary-card strong { color: var(--accent); }
+.cat-wrap { margin-top: 16px; }
+.cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.cat-name { width: 122px; flex-shrink: 0; color: var(--muted); font-size: 0.64rem; }
+.cat-bar {
+  flex: 1;
+  height: 7px;
+  background: var(--bg2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.cat-fill { height: 100%; border-radius: 999px; transition: width .7s ease; }
+.cat-val { min-width: 34px; text-align: right; font-size: 0.64rem; }
+.tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 11px 16px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; padding: 18px; }
+.tab-content.active { display: block; }
+.chat-area {
+  height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  scroll-behavior: smooth;
+}
+.chat-area::-webkit-scrollbar { width: 4px; }
+.chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+.msg { display: flex; gap: 10px; align-items: flex-start; }
+.msg-avatar {
+  width: 30px; height: 30px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.msg-avatar.ai {
+  background: linear-gradient(135deg, #16392a, #0d2519);
+  border: 1px solid rgba(94,255,160,0.22);
+}
+.msg-avatar.user {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+}
+.msg-bubble {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 0 12px 12px 12px;
+  padding: 12px 14px;
+  font-size: 0.76rem;
+  line-height: 1.7;
+}
+.msg.user { flex-direction: row-reverse; }
+.msg.user .msg-bubble {
+  background: rgba(77,184,255,0.07);
+  border-color: rgba(77,184,255,0.18);
+  border-radius: 12px 0 12px 12px;
+}
+.msg-bubble strong { color: var(--accent); }
+.msg-bubble code {
+  background: rgba(94,255,160,0.08);
+  border: 1px solid rgba(94,255,160,0.16);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.fix-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 7px 0;
+}
+.fix-icon {
+  flex-shrink: 0;
+  background: rgba(94,255,160,0.1);
+  border: 1px solid rgba(94,255,160,0.2);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 0.62rem;
+  margin-top: 1px;
+}
+.quick-chips { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 18px 12px; }
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--muted);
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  cursor: pointer;
+}
+.chip:hover { color: var(--accent2); border-color: var(--accent2); }
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(17,19,24,0.6), rgba(17,19,24,0.95));
+}
+.chat-input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.76rem;
+  color: var(--text);
+  outline: none;
+}
+.chat-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(77,184,255,0.08); }
+.chat-send {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent2);
+  color: #091014;
+  font-size: 16px;
+  cursor: pointer;
+}
+.chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
+.typing { display: flex; gap: 4px; padding: 4px 0; }
+.typing span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  animation: bounce 1s infinite ease-in-out;
+}
+.typing span:nth-child(2) { animation-delay: .15s; }
+.typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-4px);} }
+.event-list { display: flex; flex-direction: column; gap: 10px; }
+.event-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 11px;
+  padding: 12px;
+}
+.event-item.sev-high { border-left-color: var(--danger); }
+.event-item.sev-med { border-left-color: var(--warn); }
+.event-item.sev-low { border-left-color: var(--accent2); }
+.event-kind {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.event-meta {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.6;
+}
+.cause-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 13px 14px;
+  margin-bottom: 10px;
+}
+.cause-name {
+  font-size: 0.76rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.conf-bar {
+  height: 5px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.conf-fill { height: 100%; border-radius: 999px; }
+.evidence {
+  font-size: 0.67rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 42px 20px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.76rem;
+}
+.empty-state .icon { font-size: 2rem; }
+canvas {
+  width: 100%;
+  height: 190px;
+  display: block;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.report-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid transparent;
+}
+.badge-pill.good { background: var(--good-bg); border-color: rgba(94,255,160,0.18); }
+.badge-pill.warn { background: var(--warn-bg); border-color: rgba(255,179,71,0.2); }
+.badge-pill.danger { background: var(--danger-bg); border-color: rgba(255,93,93,0.22); }
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.mini-card {
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  border-radius: 10px;
+  padding: 12px;
+}
+.mini-card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+.mini-card p {
+  font-size: 0.68rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.footer-note {
+  margin-top: 16px;
+  font-size: 0.64rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.lab-card {
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  border-radius: 12px;
+  padding: 13px;
+}
+.lab-card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+}
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+}
+.lab-table th, .lab-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.lab-table th { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.60rem; }
+.lab-table tr:last-child td { border-bottom: none; }
+.stat-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.upload-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+@media (max-width: 640px) {
+  .upload-row { grid-template-columns: 1fr; }
+}
+.mono { font-family: 'Space Mono', monospace; }
+
+.spin {
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  border: 2px solid rgba(9,16,20,0.25);
+  border-top-color: #091014;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">⚛</div>
+    <div class="header-text">
+      <h1>AI Physics <span>Debugger Agent</span></h1>
+      <p>Level 2 simulation diagnosis, comparison lab, uploaded-log analysis, and local AI guidance</p>
+    </div>
+    <div class="badge">Level 2 • Hackathon Ready 2026</div>
+  </header>
+
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-head"><div class="dot"></div>Simulation Setup</div>
+        <div class="panel-body">
+          <div id="risk-banner" class="alert-banner"></div>
+
+          <label>System Type</label>
+          <select id="sel-system">
+            <option value="spring_mass">Spring-Mass Chain</option>
+            <option value="pendulum">Damped Pendulum</option>
+            <option value="double_pendulum">Double Pendulum (chaotic)</option>
+          </select>
+
+          <label>Integrator</label>
+          <select id="sel-integrator">
+            <option value="euler">Euler (explicit, unstable)</option>
+            <option value="semi_euler">Semi-Implicit Euler</option>
+            <option value="verlet">Velocity-Verlet</option>
+            <option value="rk4">RK4</option>
+          </select>
+
+          <label>Timestep dt — <span id="lbl-dt">0.050</span></label>
+          <div class="range-row">
+            <input type="range" id="sl-dt" min="0.001" max="0.15" step="0.001" value="0.05" />
+          </div>
+
+          <label>Damping — <span id="lbl-damp">0.10</span></label>
+          <div class="range-row">
+            <input type="range" id="sl-damp" min="0" max="2" step="0.01" value="0.1" />
+          </div>
+
+          <label>Spring Stiffness k — <span id="lbl-k">20</span></label>
+          <div class="range-row">
+            <input type="range" id="sl-k" min="1" max="200" step="1" value="20" />
+          </div>
+
+          <label>Simulation Duration (s) — <span id="lbl-dur">5.0</span></label>
+          <div class="range-row">
+            <input type="range" id="sl-dur" min="1" max="20" step="0.5" value="5" />
+          </div>
+
+          <button class="btn btn-primary" id="btn-run" onclick="runSim()">
+            <span id="btn-run-text">▶ Run &amp; Analyze</span>
+          </button>
+
+          <div class="two-col" style="margin-top:10px;">
+            <button class="btn btn-ghost btn-small" onclick="loadPreset('stable')">✓ Stable</button>
+            <button class="btn btn-ghost btn-small" onclick="loadPreset('unstable')">⚡ Unstable</button>
+            <button class="btn btn-ghost btn-small" onclick="loadPreset('stiff')">🧱 Stiff</button>
+            <button class="btn btn-ghost btn-small" onclick="loadPreset('chaos')">🌀 Chaos</button>
+            <button class="btn btn-ghost btn-small" onclick="autoFixConfig()">🛠 Auto Fix</button>
+          </div>
+
+          <div class="report-actions">
+            <button class="btn btn-ghost btn-small" onclick="exportJSON()">⬇ Export JSON</button>
+            <button class="btn btn-ghost btn-small" onclick="exportReport()">📝 Export Report</button>
+          </div>
+
+          <div class="report-actions">
+            <button class="btn btn-ghost btn-small" onclick="compareIntegrators()">⚖ Compare Integrators</button>
+            <button class="btn btn-ghost btn-small" onclick="runDtSweep()">📈 Sweep dt</button>
+          </div>
+
+          <label>Upload Simulation Log (CSV or JSON)</label>
+          <input type="file" id="sim-upload" accept=".csv,.json,text/csv,application/json" />
+          <div class="upload-row">
+            <button class="btn btn-ghost btn-small" onclick="analyzeUploadedData()">📂 Analyze Upload</button>
+            <button class="btn btn-ghost btn-small" onclick="loadSampleUpload()">🧪 Sample Format</button>
+          </div>
+          <div class="helper">Upload a CSV with columns <span class="mono">t,primary[,energy,accel]</span> or a JSON object with arrays <span class="mono">ts, primary, energies, accels</span>.</div>
+
+          <div class="note">
+            <strong>Local AI mode:</strong> this version runs fully in-browser. No API keys, no external model calls, and a much safer hackathon demo.
+          </div>
+          <div class="helper">Tip: use the <strong>Unstable</strong> preset for a dramatic before/after demo, then hit <strong>Auto Fix</strong> to show recovery.</div>
+          <div class="note">
+            <strong>Gemini Cloud Mode.</strong> After each run, this build can send the structured simulation summary plus a chart image to a Gemini backend on Google Cloud. If the backend is offline, it falls back to local reasoning.
+          </div>
+          <label>Optional screenshot for Gemini</label>
+          <input type="file" id="img-upload" accept="image/*" />
+          <div class="two-col" style="margin-top:10px;">
+            <button class="btn btn-ghost btn-small" onclick="voicePrompt()">🎙 Voice Prompt</button>
+            <button class="btn btn-ghost btn-small" onclick="speakLastAssistant()">🔊 Speak Reply</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div class="dot"></div>Stability Score</div>
+        <div class="panel-body">
+          <div class="score-ring-wrap">
+            <div class="score-ring">
+              <svg width="132" height="132" viewBox="0 0 132 132" aria-hidden="true">
+                <circle class="ring-bg" cx="66" cy="66" r="57"></circle>
+                <circle class="ring-fill" id="ring-fill" cx="66" cy="66" r="57" stroke="var(--accent)" stroke-dasharray="358.14" stroke-dashoffset="358.14"></circle>
+              </svg>
+              <div class="score-center">
+                <div class="score-num" id="score-num">—</div>
+                <div class="score-label">/ 100</div>
+              </div>
+            </div>
+            <div class="score-title" id="score-title">Run a simulation</div>
+            <div class="score-subtext" id="score-subtext">The debugger will rank numerical stability, identify likely causes, and suggest the fastest repair path.</div>
+          </div>
+
+          <div id="metrics-grid" class="metric-grid" style="display:none;">
+            <div class="metric-box"><div class="m-val" id="m-edrift">—</div><div class="m-label">Energy Drift</div></div>
+            <div class="metric-box"><div class="m-val" id="m-events">—</div><div class="m-label">Events</div></div>
+            <div class="metric-box"><div class="m-val" id="m-accel">—</div><div class="m-label">Accel Spike</div></div>
+            <div class="metric-box"><div class="m-val" id="m-stiff">—</div><div class="m-label">Stiffness Index</div></div>
+          </div>
+
+          <div class="cat-wrap" id="category-bars" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('tab-ai', this)">🤖 AI Diagnosis</div>
+          <div class="tab" onclick="switchTab('tab-events', this)">⚡ Events</div>
+          <div class="tab" onclick="switchTab('tab-causes', this)">🔍 Root Causes</div>
+          <div class="tab" onclick="switchTab('tab-chart', this); redrawCharts();">📊 Charts</div>
+          <div class="tab" onclick="switchTab('tab-lab', this)">🧪 Lab</div>
+        </div>
+
+        <div id="tab-ai" class="tab-content active" style="padding:0;">
+          <div class="chat-area" id="chat-area">
+            <div class="msg">
+              <div class="msg-avatar ai">⚛</div>
+              <div class="msg-bubble">
+                Hello — I’m your <strong>local AI Physics Debugging Agent</strong>. I analyze simulation health, explain instability in plain language, and give concrete fixes that you can show in a hackathon demo.<br /><br />
+                Try running a preset, or ask things like <em>“Why is Euler unstable?”</em>, <em>“What should I change first?”</em>, or <em>“Explain this like I’m presenting to judges.”</em>
+              </div>
+            </div>
+          </div>
+          <div class="quick-chips">
+            <span class="chip" onclick="sendQ('Why is Euler integration unstable?')">Euler unstable?</span>
+            <span class="chip" onclick="sendQ('What does energy drift mean?')">Energy drift?</span>
+            <span class="chip" onclick="sendQ('What is the best integrator for stiff systems?')">Best integrator?</span>
+            <span class="chip" onclick="sendQ('Explain my latest simulation for judges with Gemini style.')">Explain for judges</span>
+          </div>
+          <div class="chat-input-row">
+            <input id="chat-input" class="chat-input" placeholder="Ask about the simulation…" />
+            <button class="chat-send" id="chat-send" onclick="sendChat()">➤</button>
+          </div>
+        </div>
+
+        <div id="tab-events" class="tab-content">
+          <div id="events-content">
+            <div class="empty-state"><div class="icon">⚡</div>Run a simulation to see detected instability events and timing.</div>
+          </div>
+        </div>
+
+        <div id="tab-causes" class="tab-content">
+          <div id="causes-content">
+            <div class="empty-state"><div class="icon">🔍</div>Root-cause analysis will appear here after a simulation run.</div>
+          </div>
+        </div>
+
+        <div id="tab-chart" class="tab-content">
+          <div class="section-title">Energy Over Time</div>
+          <canvas id="chart-energy" height="190"></canvas>
+          <div class="section-title" style="margin-top:18px;">Acceleration Magnitude</div>
+          <canvas id="chart-accel" height="190"></canvas>
+          <div class="section-title" style="margin-top:18px;">Primary Position / Angle</div>
+          <canvas id="chart-pos" height="190"></canvas>
+        </div>
+
+        <div id="tab-lab" class="tab-content">
+          <div id="lab-content">
+            <div class="empty-state"><div class="icon">🧪</div>Run an integrator comparison, dt sweep, or upload an external log to unlock the Level 2 lab.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:20px;">
+        <div class="panel-head"><div class="dot"></div>Presentation Mode Summary</div>
+        <div class="panel-body">
+          <div id="presentation-summary" class="summary-card">
+            Run a simulation to generate a presenter-friendly summary you can read out during your demo.
+          </div>
+          <div class="mini-grid">
+            <div class="mini-card">
+              <h4>What judges will see</h4>
+              <p>Clear failure detection, explainable diagnosis, and an auto-fix workflow instead of a generic chatbot.</p>
+            </div>
+            <div class="mini-card">
+              <h4>Best demo flow</h4>
+              <p>Show an unstable preset, highlight the bad score, apply auto-fix, rerun, and compare the improvement.</p>
+            </div>
+          </div>
+          <div class="footer-note">This build prefers a <strong>Gemini backend on Google Cloud</strong> for multimodal diagnosis, and falls back to local reasoning if the backend is unavailable.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+const appState = {
+  simResult: null,
+  analysisResult: null,
+  config: null,
+  chatHistory: [],
+  running: false,
+  lastAssistantText: '',
+  lastMode: 'local',
+  labState: { compare: null, sweep: null, upload: null }
+};
+
+const GEMINI_ENDPOINT = '/api/gemini/diagnose';
+const FALLBACK_ENDPOINT = '/api/gemini/health';
+
+const UI = {
+  init() {
+    this.bindRanges();
+    this.bindChat();
+    this.previewRisk();
+    drawEmptyCharts();
+  },
+  bindRanges() {
+    const bindings = [
+      ['sl-dt', 'lbl-dt', (v) => Number(v).toFixed(3)],
+      ['sl-damp', 'lbl-damp', (v) => Number(v).toFixed(2)],
+      ['sl-k', 'lbl-k', (v) => String(v)],
+      ['sl-dur', 'lbl-dur', (v) => Number(v).toFixed(1)]
+    ];
+    bindings.forEach(([slider, label, format]) => {
+      $(slider).addEventListener('input', (e) => {
+        $(label).textContent = format(e.target.value);
+        UI.previewRisk();
+      });
+    });
+    $('sel-integrator').addEventListener('change', UI.previewRisk);
+    $('sel-system').addEventListener('change', UI.previewRisk);
+  },
+  bindChat() {
+    $('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChat();
+    });
+  },
+  previewRisk() {
+    const cfg = readConfig();
+    const risk = estimatePreRunRisk(cfg);
+    const banner = $('risk-banner');
+    if (!risk.show) {
+      banner.style.display = 'none';
+      banner.innerHTML = '';
+      return;
+    }
+    banner.style.display = 'block';
+    banner.innerHTML = risk.message;
+  }
+};
+
+const Physics = (() => {
+  function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+  function norm(arr) { return Math.sqrt(arr.reduce((s, v) => s + v * v, 0)); }
+  function median(arr) {
+    if (!arr.length) return 0;
+    const s = [...arr].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : 0.5 * (s[m - 1] + s[m]);
+  }
+  function quantile(arr, q) {
+    if (!arr.length) return 0;
+    const s = [...arr].sort((a, b) => a - b);
+    const idx = clamp(Math.floor((s.length - 1) * q), 0, s.length - 1);
+    return s[idx];
+  }
+
+  function euler(rhs, t, x, dt, p) {
+    const d = rhs(t, x, p);
+    return x.map((xi, i) => xi + dt * d[i]);
+  }
+  function semiEuler(rhs, t, x, dt, p, split) {
+    const d = rhs(t, x, p);
+    const q = x.slice(0, split);
+    const v = x.slice(split);
+    const dv = d.slice(split);
+    const v2 = v.map((vi, i) => vi + dt * dv[i]);
+    const q2 = q.map((qi, i) => qi + dt * v2[i]);
+    return [...q2, ...v2];
+  }
+  function verlet(rhs, t, x, dt, p, split) {
+    const q = x.slice(0, split);
+    const v = x.slice(split);
+    const a0 = rhs(t, x, p).slice(split);
+    const q1 = q.map((qi, i) => qi + dt * v[i] + 0.5 * dt * dt * a0[i]);
+    const xmid = [...q1, ...v];
+    const a1 = rhs(t + dt, xmid, p).slice(split);
+    const v1 = v.map((vi, i) => vi + 0.5 * dt * (a0[i] + a1[i]));
+    return [...q1, ...v1];
+  }
+  function rk4(rhs, t, x, dt, p) {
+    const k1 = rhs(t, x, p);
+    const k2 = rhs(t + 0.5 * dt, x.map((xi, i) => xi + 0.5 * dt * k1[i]), p);
+    const k3 = rhs(t + 0.5 * dt, x.map((xi, i) => xi + 0.5 * dt * k2[i]), p);
+    const k4 = rhs(t + dt, x.map((xi, i) => xi + dt * k3[i]), p);
+    return x.map((xi, i) => xi + (dt / 6) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+  }
+
+  function springMassRhs(t, x, p) {
+    const N = p.N || 4;
+    const k = p.k || 20;
+    const damping = p.damping || 0.1;
+    const m = p.m || 1.0;
+    const pos = x.slice(0, N);
+    const vel = x.slice(N);
+    const force = new Array(N).fill(0);
+
+    for (let i = 0; i < N; i++) {
+      const left = i > 0 ? pos[i - 1] : 0;
+      const right = i < N - 1 ? pos[i + 1] : 0;
+      force[i] += -k * (2 * pos[i] - left - right) - damping * vel[i];
+    }
+
+    return [...vel, ...force.map((f) => f / m)];
+  }
+  function springMassEnergy(t, x, p) {
+    const N = p.N || 4;
+    const k = p.k || 20;
+    const m = p.m || 1.0;
+    const pos = x.slice(0, N);
+    const vel = x.slice(N);
+    const T = 0.5 * m * vel.reduce((s, v) => s + v * v, 0);
+    let V = 0.5 * k * pos[0] * pos[0] + 0.5 * k * pos[N - 1] * pos[N - 1];
+    for (let i = 0; i < N - 1; i++) V += 0.5 * k * (pos[i + 1] - pos[i]) ** 2;
+    return T + V;
+  }
+
+  function pendulumRhs(t, x, p) {
+    const [theta, omega] = x;
+    const g = p.g || 9.81;
+    const L = p.L || 1.0;
+    const damping = p.damping || 0.05;
+    return [omega, -(g / L) * Math.sin(theta) - damping * omega];
+  }
+  function pendulumEnergy(t, x, p) {
+    const [theta, omega] = x;
+    const g = p.g || 9.81;
+    const L = p.L || 1.0;
+    const m = p.m || 1.0;
+    return 0.5 * m * (L * omega) ** 2 + m * g * L * (1 - Math.cos(theta));
+  }
+
+  function doublePendulumRhs(t, x, p) {
+    const [th1, th2, w1, w2] = x;
+    const g = p.g || 9.81;
+    const m1 = p.m1 || 1.0;
+    const m2 = p.m2 || 1.0;
+    const L1 = p.L1 || 1.0;
+    const L2 = p.L2 || 1.0;
+    const damping = p.damping || 0.02;
+    const delta = th1 - th2;
+
+    const den1 = L1 * (2 * m1 + m2 - m2 * Math.cos(2 * th1 - 2 * th2));
+    const den2 = L2 * (2 * m1 + m2 - m2 * Math.cos(2 * th1 - 2 * th2));
+
+    const a1 = (
+      -g * (2 * m1 + m2) * Math.sin(th1)
+      - m2 * g * Math.sin(th1 - 2 * th2)
+      - 2 * Math.sin(delta) * m2 * (w2 * w2 * L2 + w1 * w1 * L1 * Math.cos(delta))
+    ) / Math.max(1e-9, den1) - damping * w1;
+
+    const a2 = (
+      2 * Math.sin(delta) * (
+        w1 * w1 * L1 * (m1 + m2)
+        + g * (m1 + m2) * Math.cos(th1)
+        + w2 * w2 * L2 * m2 * Math.cos(delta)
+      )
+    ) / Math.max(1e-9, den2) - damping * w2;
+
+    return [w1, w2, a1, a2];
+  }
+
+  function doublePendulumEnergy(t, x, p) {
+    const [th1, th2, w1, w2] = x;
+    const g = p.g || 9.81;
+    const m1 = p.m1 || 1.0;
+    const m2 = p.m2 || 1.0;
+    const L1 = p.L1 || 1.0;
+    const L2 = p.L2 || 1.0;
+    const T = 0.5 * m1 * (L1 * w1) ** 2 + 0.5 * m2 * ((L1 * w1) ** 2 + (L2 * w2) ** 2 + 2 * L1 * L2 * w1 * w2 * Math.cos(th1 - th2));
+    const V = -(m1 + m2) * g * L1 * Math.cos(th1) - m2 * g * L2 * Math.cos(th2);
+    return T + V;
+  }
+
+  function simulate(config) {
+    const { system, integrator, dt, tEnd, params } = config;
+    const isSpring = system === 'spring_mass';
+    const isDouble = system === 'double_pendulum';
+    const N = isSpring ? (params.N || 4) : isDouble ? 2 : 1;
+    const split = isSpring ? N : isDouble ? 2 : 1;
+    const rhs = isSpring ? springMassRhs : isDouble ? doublePendulumRhs : pendulumRhs;
+    const energyFn = isSpring ? springMassEnergy : isDouble ? doublePendulumEnergy : pendulumEnergy;
+
+    let x = isSpring
+      ? [...Array(N).fill(0).map((_, i) => 0.12 * (i + 1)), ...Array(N).fill(0)]
+      : isDouble
+        ? [Math.PI / 2.4, Math.PI / 3.2, 0, 0]
+        : [Math.PI / 4, 0];
+
+    const ts = [], xs = [], energies = [], accels = [], primary = [];
+    let t = 0;
+    let step = 0;
+    const maxSteps = Math.min(20000, Math.ceil(tEnd / dt) + 2);
+    let abortReason = '';
+
+    while (t <= tEnd && step < maxSteps) {
+      ts.push(t);
+      xs.push([...x]);
+      energies.push(energyFn(t, x, params));
+      primary.push(x[0]);
+
+      let next;
+      try {
+        if (integrator === 'euler') next = euler(rhs, t, x, dt, params);
+        else if (integrator === 'semi_euler') next = semiEuler(rhs, t, x, dt, params, split);
+        else if (integrator === 'verlet') next = verlet(rhs, t, x, dt, params, split);
+        else next = rk4(rhs, t, x, dt, params);
+      } catch (err) {
+        abortReason = 'Integrator threw an exception';
+        break;
+      }
+
+      if (!next.every(Number.isFinite)) {
+        abortReason = 'State became NaN/Inf';
+        break;
+      }
+      const mag = norm(next.slice(0, split));
+      if (mag > 1e4) {
+        abortReason = 'State magnitude exploded';
+        x = next;
+        break;
+      }
+
+      x = next;
+      t += dt;
+      step += 1;
+    }
+
+    for (let i = 1; i < xs.length - 1; i++) {
+      const prev = xs[i - 1];
+      const curr = xs[i];
+      const next = xs[i + 1];
+      const a = curr.map((_, j) => (next[j] - 2 * curr[j] + prev[j]) / (dt * dt));
+      accels.push(norm(a.slice(0, split)));
+    }
+
+    return { ts, xs, energies, accels, primary, abortReason, completed: ts.length > 0 ? ts[ts.length - 1] >= tEnd * 0.98 : false };
+  }
+
+  function analyze(result, config) {
+    if (!result || result.ts.length < 5) return null;
+
+    const events = [];
+    const metrics = {};
+    const { ts, xs, energies, accels, primary, abortReason } = result;
+    const n = ts.length;
+
+    const E0 = Math.max(1e-9, Math.abs(energies[0]));
+    const Eend = energies[energies.length - 1];
+    const maxE = Math.max(...energies.map((e) => Math.abs(e)));
+    const minE = Math.min(...energies.map((e) => Math.abs(e)));
+    const energyDrift = Math.abs(Eend - energies[0]) / E0;
+    const explosionRatio = maxE / E0;
+
+    const earlyAbort = !result.completed;
+    const stiffnessIndex = config.system === 'spring_mass'
+      ? config.dt * Math.sqrt((config.params.k || 1) / Math.max(1e-9, config.params.m || 1))
+      : config.dt * Math.sqrt((config.params.g || 9.81) / Math.max(1e-9, config.system === 'double_pendulum' ? (config.params.L1 || 1) : (config.params.L || 1)));
+
+    const kWindow = Math.max(6, Math.floor(n / 10));
+    const startAmp = Math.sqrt(primary.slice(0, kWindow).reduce((s, v) => s + v * v, 0) / kWindow);
+    const endAmp = Math.sqrt(primary.slice(-kWindow).reduce((s, v) => s + v * v, 0) / kWindow);
+    const oscRatio = (endAmp + 1e-12) / (startAmp + 1e-12);
+
+    const medAccel = median(accels);
+    const p99Accel = quantile(accels, 0.99);
+    const accelRatio = medAccel > 0 ? p99Accel / medAccel : 0;
+    const peakPrimary = Math.max(...primary.map((v) => Math.abs(v)));
+
+    metrics.energyDrift = energyDrift;
+    metrics.explosionRatio = explosionRatio;
+    metrics.oscRatio = oscRatio;
+    metrics.accelRatio = accelRatio;
+    metrics.stiffnessIndex = stiffnessIndex;
+    metrics.peakPrimary = peakPrimary;
+    metrics.earlyAbort = earlyAbort;
+    metrics.abortReason = abortReason || '';
+
+    if (config.integrator === 'euler' && stiffnessIndex > 0.25) {
+      events.push({ kind: 'integrator_risk', t: 0, step: 0, severity: clamp((stiffnessIndex - 0.25) / 0.45, 0.35, 0.95), details: { stiffnessIndex } });
+    }
+    if (stiffnessIndex > 0.55) {
+      events.push({ kind: 'stiff_system', t: 0, step: 0, severity: clamp((stiffnessIndex - 0.55) / 0.55, 0.35, 1), details: { stiffnessIndex } });
+    }
+    if (earlyAbort) {
+      events.push({ kind: 'early_abort', t: ts[ts.length - 1], step: n - 1, severity: 0.92, details: { reason: abortReason || 'Simulation diverged before finishing' } });
+    }
+    if (explosionRatio >= 4) {
+      const idx = energies.findIndex((e) => Math.abs(e) / E0 >= 4);
+      events.push({ kind: 'energy_explosion', t: idx >= 0 ? ts[idx] : ts[n - 1], step: idx >= 0 ? idx : n - 1, severity: clamp((explosionRatio - 4) / 4, 0.55, 1), details: { ratio: explosionRatio } });
+    }
+    if (energyDrift >= 0.05) {
+      events.push({ kind: 'energy_drift', t: ts[n - 1], step: n - 1, severity: clamp(energyDrift / 0.25, 0.3, 1), details: { drift: energyDrift } });
+    }
+    if (oscRatio >= 1.25) {
+      events.push({ kind: 'osc_growth', t: ts[n - 1], step: n - 1, severity: clamp((oscRatio - 1.25) / 1.25, 0.3, 1), details: { ratio: oscRatio } });
+    }
+    if (oscRatio >= 1.45 && energyDrift < 0.03) {
+      events.push({ kind: 'resonance_growth', t: ts[n - 1], step: n - 1, severity: clamp((oscRatio - 1.45) / 0.9, 0.35, 0.85), details: { ratio: oscRatio } });
+    }
+    if (accelRatio >= 5.5) {
+      events.push({ kind: 'accel_spike', t: ts[Math.max(0, Math.floor(n * 0.8))], step: Math.max(0, Math.floor(n * 0.8)), severity: clamp((accelRatio - 5.5) / 8, 0.35, 1), details: { ratio: accelRatio } });
+    }
+    if (config.params.damping < 0.05 && oscRatio > 1.1) {
+      events.push({ kind: 'low_damping', t: ts[n - 1], step: n - 1, severity: clamp((0.05 - config.params.damping) / 0.05 + 0.25, 0.3, 0.8), details: { damping: config.params.damping } });
+    }
+
+    const catScores = {
+      health: earlyAbort ? 0 : 100,
+      energy_explosion: explosionRatio >= 4 ? Math.max(0, 100 - 22 * (explosionRatio - 4)) : 100,
+      energy_drift: Math.max(0, 100 - energyDrift * 480),
+      osc_growth: Math.max(0, 100 - Math.max(0, oscRatio - 1) * 120),
+      accel_spike: accelRatio ? Math.max(0, 100 - (accelRatio - 1) * 12) : 100,
+      stiffness: Math.max(0, 100 - Math.max(0, stiffnessIndex - 0.18) * 170)
+    };
+
+    const weights = {
+      health: 1.2,
+      energy_explosion: 1.15,
+      energy_drift: 0.85,
+      osc_growth: 0.95,
+      accel_spike: 0.7,
+      stiffness: 0.8
+    };
+
+    let num = 0, den = 0;
+    Object.entries(catScores).forEach(([k, v]) => {
+      const w = weights[k] || 0.5;
+      num += w * v;
+      den += w;
+    });
+    const overallScore = den > 0 ? num / den : 100;
+
+    const rootCauses = computeRootCauses(events, metrics, config);
+    const fixes = recommendFixes(events, metrics, config);
+
+    return { overallScore, catScores, events, metrics, rootCauses, fixes };
+  }
+
+  function computeRootCauses(events, metrics, config) {
+    const kinds = new Set(events.map((e) => e.kind));
+    const causes = [];
+    const integrator = config.integrator;
+    const dt = config.dt;
+
+    if (kinds.has('early_abort') || kinds.has('energy_explosion')) {
+      causes.push({
+        cause: 'Timestep too large for current stiffness',
+        confidence: Math.min(0.97, 0.48 + Math.max(0, metrics.stiffnessIndex - 0.22) + (metrics.explosionRatio > 4 ? 0.18 : 0) + (metrics.earlyAbort ? 0.18 : 0)),
+        evidence: [
+          `dt = ${dt.toFixed(3)}`,
+          `Stiffness index = ${metrics.stiffnessIndex.toFixed(2)}`,
+          metrics.explosionRatio > 1 ? `Energy peak = ${metrics.explosionRatio.toFixed(2)}× baseline` : null,
+          metrics.abortReason ? `Abort reason: ${metrics.abortReason}` : null
+        ].filter(Boolean),
+        suggest: 'Cut dt by 40–60%, then rerun. For stiff cases, prefer RK4 or Velocity-Verlet.'
+      });
+    }
+
+    if ((kinds.has('energy_drift') || kinds.has('integrator_risk')) && (integrator === 'euler' || integrator === 'rk4')) {
+      causes.push({
+        cause: 'Integrator is injecting or leaking energy',
+        confidence: Math.min(0.92, 0.44 + metrics.energyDrift * 1.4 + (integrator === 'euler' ? 0.14 : 0.04)),
+        evidence: [
+          `Integrator = ${integrator}`,
+          `Energy drift = ${(metrics.energyDrift * 100).toFixed(1)}%`,
+          'Explicit or non-symplectic methods can accumulate energy error over time.'
+        ],
+        suggest: 'Switch to Velocity-Verlet for structure-preserving motion, or RK4 with a smaller dt.'
+      });
+    }
+
+    if (kinds.has('osc_growth') || kinds.has('low_damping')) {
+      causes.push({
+        cause: 'Insufficient damping or numerical pumping',
+        confidence: Math.min(0.88, 0.36 + Math.max(0, metrics.oscRatio - 1) * 0.42 + (config.params.damping < 0.05 ? 0.14 : 0)),
+        evidence: [
+          `Oscillation envelope grew ${metrics.oscRatio.toFixed(2)}×`,
+          `Damping = ${config.params.damping.toFixed(2)}`,
+          'Amplitude growth usually means too little damping or timestep-driven energy injection.'
+        ],
+        suggest: 'Raise damping slightly and verify that dt is not exciting the system.'
+      });
+    }
+
+    if (kinds.has('stiff_system') || kinds.has('accel_spike')) {
+      causes.push({
+        cause: 'Stiff dynamics causing sharp acceleration spikes',
+        confidence: Math.min(0.9, 0.38 + Math.max(0, metrics.accelRatio - 1) * 0.06 + Math.max(0, metrics.stiffnessIndex - 0.25) * 0.35),
+        evidence: [
+          `Accel spike ratio = ${metrics.accelRatio ? metrics.accelRatio.toFixed(2) : 'N/A'}×`,
+          `Stiffness index = ${metrics.stiffnessIndex.toFixed(2)}`,
+          'Large acceleration spikes often indicate an explicit solver being pushed past its comfort zone.'
+        ],
+        suggest: 'Reduce dt, consider RK4, and avoid extremely stiff settings during the demo unless you want to show failure.'
+      });
+    }
+
+    if (kinds.has('resonance_growth')) {
+      causes.push({
+        cause: 'Resonant amplification',
+        confidence: 0.67,
+        evidence: [
+          'Amplitude grew while energy drift stayed comparatively low.',
+          'This pattern can happen when the step timing excites the system rather than purely destabilizing it.'
+        ],
+        suggest: 'Nudge dt away from the resonant region or add light damping.'
+      });
+    }
+
+    if (!causes.length) {
+      causes.push({
+        cause: 'No major instability detected',
+        confidence: 0.82,
+        evidence: [
+          `Energy drift = ${(metrics.energyDrift * 100).toFixed(2)}%`,
+          `Oscillation ratio = ${metrics.oscRatio.toFixed(2)}×`,
+          'The solver remained numerically well-behaved over the simulated time horizon.'
+        ],
+        suggest: 'Use this configuration as your stable benchmark in the demo.'
+      });
+    }
+
+    return causes.sort((a, b) => b.confidence - a.confidence).slice(0, 4);
+  }
+
+  function recommendFixes(events, metrics, config) {
+    const fixes = [];
+    const kinds = new Set(events.map((e) => e.kind));
+    if (metrics.stiffnessIndex > 0.3 || kinds.has('energy_explosion') || kinds.has('early_abort')) {
+      fixes.push({ priority: 'High', action: `Reduce dt from ${config.dt.toFixed(3)} to ${(config.dt * 0.5).toFixed(3)} or lower.`, why: 'This directly addresses stiffness-driven divergence.' });
+    }
+    if (config.integrator === 'euler') {
+      fixes.push({ priority: 'High', action: 'Switch from Euler to Velocity-Verlet or RK4.', why: 'Euler is the weakest option here and exaggerates energy drift.' });
+    }
+    if (config.params.damping < 0.08 && metrics.oscRatio > 1.1) {
+      fixes.push({ priority: 'Medium', action: `Increase damping to at least ${Math.max(0.12, config.params.damping + 0.08).toFixed(2)}.`, why: 'This suppresses envelope growth and makes the demo easier to stabilize.' });
+    }
+    if (kinds.has('accel_spike')) {
+      fixes.push({ priority: 'Medium', action: 'Avoid pairing a large dt with high stiffness.', why: 'Acceleration spikes are a hint that the explicit solver is being overdriven.' });
+    }
+    if (!fixes.length) {
+      fixes.push({ priority: 'Low', action: 'Keep this setup as your stable reference case.', why: 'Use it as the “healthy” baseline in your presentation.' });
+    }
+    return fixes;
+  }
+
+  return { simulate, analyze };
+})();
+
+function estimatePreRunRisk(config) {
+  const idx = config.system === 'spring_mass'
+    ? config.dt * Math.sqrt((config.params.k || 1) / Math.max(1e-9, config.params.m || 1))
+    : config.dt * Math.sqrt((config.params.g || 9.81) / Math.max(1e-9, config.system === 'double_pendulum' ? (config.params.L1 || 1) : (config.params.L || 1)));
+  if (config.integrator === 'euler' && idx > 0.24) {
+    return { show: true, message: `<strong>High risk configuration.</strong> Euler + high stiffness ratio (${idx.toFixed(2)}) is likely to drift or explode — good for a failure demo, bad for a stable one.` };
+  }
+  if (idx > 0.55) {
+    return { show: true, message: `<strong>Stiff system warning.</strong> Stiffness index ${idx.toFixed(2)} suggests that a smaller dt or stronger integrator will be safer.` };
+  }
+  if (config.params.damping < 0.03) {
+    return { show: true, message: `<strong>Low damping.</strong> Oscillations may grow and look dramatic. This is useful if you want visible instability.` };
+  }
+  return { show: false, message: '' };
+}
+
+function readConfig() {
+  return {
+    system: $('sel-system').value,
+    integrator: $('sel-integrator').value,
+    dt: parseFloat($('sl-dt').value),
+    tEnd: parseFloat($('sl-dur').value),
+    params: {
+      N: 4,
+      k: parseFloat($('sl-k').value),
+      damping: parseFloat($('sl-damp').value),
+      m: 1.0,
+      g: 9.81,
+      L: 1.0,
+      L1: 1.0,
+      L2: 1.0,
+      m1: 1.0,
+      m2: 1.0
+    }
+  };
+}
+
+function loadPreset(type) {
+  const set = (id, value, labelId, formatter) => {
+    $(id).value = value;
+    if (labelId) $(labelId).textContent = formatter ? formatter(value) : String(value);
+  };
+
+  if (type === 'unstable') {
+    $('sel-system').value = 'spring_mass';
+    $('sel-integrator').value = 'euler';
+    set('sl-dt', 0.12, 'lbl-dt', (v) => Number(v).toFixed(3));
+    set('sl-damp', 0.02, 'lbl-damp', (v) => Number(v).toFixed(2));
+    set('sl-k', 90, 'lbl-k');
+    set('sl-dur', 5, 'lbl-dur', (v) => Number(v).toFixed(1));
+  } else if (type === 'stiff') {
+    $('sel-system').value = 'spring_mass';
+    $('sel-integrator').value = 'rk4';
+    set('sl-dt', 0.03, 'lbl-dt', (v) => Number(v).toFixed(3));
+    set('sl-damp', 0.08, 'lbl-damp', (v) => Number(v).toFixed(2));
+    set('sl-k', 160, 'lbl-k');
+    set('sl-dur', 6, 'lbl-dur', (v) => Number(v).toFixed(1));
+  } else if (type === 'chaos') {
+    $('sel-system').value = 'double_pendulum';
+    $('sel-integrator').value = 'rk4';
+    set('sl-dt', 0.02, 'lbl-dt', (v) => Number(v).toFixed(3));
+    set('sl-damp', 0.03, 'lbl-damp', (v) => Number(v).toFixed(2));
+    set('sl-k', 20, 'lbl-k');
+    set('sl-dur', 10, 'lbl-dur', (v) => Number(v).toFixed(1));
+  } else {
+    $('sel-system').value = 'pendulum';
+    $('sel-integrator').value = 'verlet';
+    set('sl-dt', 0.02, 'lbl-dt', (v) => Number(v).toFixed(3));
+    set('sl-damp', 0.45, 'lbl-damp', (v) => Number(v).toFixed(2));
+    set('sl-k', 20, 'lbl-k');
+    set('sl-dur', 8, 'lbl-dur', (v) => Number(v).toFixed(1));
+  }
+  UI.previewRisk();
+  addChatMsg('assistant', `Loaded the <strong>${type}</strong> preset. ${type === 'unstable' ? 'This one is designed to fail loudly so you can show the debugger catching it.' : type === 'stiff' ? 'This one demonstrates a stiff but recoverable case.' : 'This is a cleaner baseline for a stable comparison.'}`, true);
+}
+
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach((tab) => tab.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'));
+  $(id).classList.add('active');
+  if (el && el.classList && el.classList.contains('tab')) {
+    el.classList.add('active');
+  } else {
+    const order = ['tab-ai', 'tab-events', 'tab-causes', 'tab-chart', 'tab-lab'];
+    const idx = order.indexOf(id);
+    const tabs = document.querySelectorAll('.tab');
+    if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+  }
+}
+
+function setScore(score) {
+  const circumference = 358.14;
+  const offset = circumference * (1 - score / 100);
+  $('ring-fill').style.strokeDashoffset = offset;
+  $('score-num').textContent = Math.round(score);
+
+  if (score >= 80) {
+    $('ring-fill').style.stroke = 'var(--accent)';
+    $('score-num').className = 'score-num good';
+    $('score-title').textContent = 'Stable';
+    $('score-subtext').textContent = 'This configuration is a strong “healthy baseline” for comparison in your demo.';
+  } else if (score >= 50) {
+    $('ring-fill').style.stroke = 'var(--warn)';
+    $('score-num').className = 'score-num warn';
+    $('score-title').textContent = 'Marginal';
+    $('score-subtext').textContent = 'The system runs, but error is accumulating. Great for explaining why numerical method choice matters.';
+  } else {
+    $('ring-fill').style.stroke = 'var(--danger)';
+    $('score-num').className = 'score-num danger';
+    $('score-title').textContent = 'Unstable';
+    $('score-subtext').textContent = 'This is exactly the kind of failure case that makes the debugger look useful.';
+  }
+}
+
+function renderCategoryBars(catScores) {
+  const labels = {
+    health: 'Completion',
+    energy_explosion: 'Explosion',
+    energy_drift: 'Energy Drift',
+    osc_growth: 'Osc. Growth',
+    accel_spike: 'Accel Spike',
+    stiffness: 'Step/Stiffness'
+  };
+  const html = Object.entries(catScores).map(([k, s]) => {
+    const color = s >= 80 ? 'var(--accent)' : s >= 50 ? 'var(--warn)' : 'var(--danger)';
+    return `<div class="cat-row">
+      <div class="cat-name">${labels[k] || k}</div>
+      <div class="cat-bar"><div class="cat-fill" style="width:${Math.max(0, Math.min(100, s))}%;background:${color};"></div></div>
+      <div class="cat-val">${Math.round(s)}</div>
+    </div>`;
+  }).join('');
+  $('category-bars').innerHTML = html;
+  $('category-bars').style.display = 'block';
+}
+
+function renderEvents(events) {
+  if (!events || !events.length) {
+    $('events-content').innerHTML = '<div class="empty-state"><div class="icon">✅</div>No failure events detected. The simulation stayed numerically well-behaved.</div>';
+    return;
+  }
+  const labels = {
+    integrator_risk: 'Integrator Risk',
+    stiff_system: 'Stiff System',
+    early_abort: 'Early Abort',
+    energy_explosion: 'Energy Explosion',
+    energy_drift: 'Energy Drift',
+    osc_growth: 'Oscillation Growth',
+    resonance_growth: 'Resonance Growth',
+    accel_spike: 'Acceleration Spike',
+    low_damping: 'Low Damping'
+  };
+  $('events-content').innerHTML = `<div class="event-list">${events.map((e) => {
+    const sevClass = e.severity >= 0.75 ? 'sev-high' : e.severity >= 0.45 ? 'sev-med' : 'sev-low';
+    const detailText = e.details ? Object.entries(e.details).map(([k, v]) => `${k}: ${typeof v === 'number' ? v.toFixed(3) : v}`).join(' · ') : '';
+    return `<div class="event-item ${sevClass}">
+      <div class="event-kind">${labels[e.kind] || e.kind}</div>
+      <div class="event-meta">t = ${Number(e.t).toFixed(3)}s · step ${e.step} · severity ${(e.severity * 100).toFixed(0)}%${detailText ? ' · ' + detailText : ''}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderCauses(causes, fixes) {
+  if (!causes || !causes.length) {
+    $('causes-content').innerHTML = '<div class="empty-state"><div class="icon">🔍</div>No major root cause identified yet.</div>';
+    return;
+  }
+  const causeHTML = causes.map((c, i) => {
+    const conf = Math.max(0, Math.min(100, c.confidence * 100));
+    const color = conf >= 80 ? 'var(--danger)' : conf >= 55 ? 'var(--warn)' : 'var(--accent2)';
+    return `<div class="cause-card">
+      <div class="cause-name">${i + 1}. ${c.cause}</div>
+      <div style="font-size:0.62rem;color:${color};margin-bottom:6px;">Confidence: ${conf.toFixed(0)}%</div>
+      <div class="conf-bar"><div class="conf-fill" style="width:${conf}%;background:${color};"></div></div>
+      <div class="evidence">${(c.evidence || []).map((x) => `→ ${x}`).join('<br />')}</div>
+      <div style="margin-top:8px;font-size:0.67rem;color:var(--accent);">💡 Fix: ${c.suggest}</div>
+    </div>`;
+  }).join('');
+
+  const fixHTML = fixes && fixes.length
+    ? `<div class="summary-card" style="margin-top:12px;">
+        <strong>Fastest repair path</strong><br /><br />
+        ${fixes.map((f) => `<div class="fix-item"><span class="fix-icon">${f.priority}</span><span><strong>${f.action}</strong><br /><span style="color:var(--muted);">${f.why}</span></span></div>`).join('')}
+      </div>`
+    : '';
+
+  $('causes-content').innerHTML = causeHTML + fixHTML;
+}
+
+function drawChart(canvasId, ts, ys, color, yLabel) {
+  const canvas = $(canvasId);
+  const ctx = canvas.getContext('2d');
+  // clientWidth is 0 inside hidden tabs; use offsetWidth or parent width as fallback
+  const width = canvas.clientWidth || canvas.offsetWidth || canvas.parentElement?.offsetWidth || 600;
+  const height = Math.max(canvas.clientHeight || canvas.offsetHeight, 190);
+  const W = Math.floor(width * window.devicePixelRatio);
+  const H = Math.floor(height * window.devicePixelRatio);
+  if (canvas.width !== W || canvas.height !== H) {
+    canvas.width = W;
+    canvas.height = H;
+  }
+
+  const pad = { l: 52, r: 16, t: 18, b: 28 };
+  const w = W - pad.l - pad.r;
+  const h = H - pad.t - pad.b;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#111318';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!ts || !ys || ts.length < 2 || ys.length < 2) {
+    ctx.fillStyle = '#7a8099';
+    ctx.font = `${11 * window.devicePixelRatio}px Space Mono`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Run a simulation to see data', W / 2, H / 2);
+    return;
+  }
+
+  const minT = ts[0];
+  const maxT = ts[ts.length - 1];
+  let minY = Math.min(...ys);
+  let maxY = Math.max(...ys);
+  if (Math.abs(maxY - minY) < 1e-9) {
+    maxY += 1;
+    minY -= 1;
+  }
+  const tx = (t) => pad.l + ((t - minT) / Math.max(1e-9, maxT - minT)) * w;
+  const ty = (y) => pad.t + h - ((y - minY) / Math.max(1e-9, maxY - minY)) * h;
+
+  ctx.strokeStyle = 'rgba(42,47,66,0.9)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + (h * i) / 4;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(pad.l + w, y);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  const step = Math.max(1, Math.floor(ts.length / 600));
+  for (let i = 0; i < ts.length; i += step) {
+    const x = tx(ts[i]);
+    const y = ty(ys[i]);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.7 * window.devicePixelRatio;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(tx(ts[0]), ty(ys[0]));
+  for (let i = 1; i < ts.length; i += step) ctx.lineTo(tx(ts[i]), ty(ys[i]));
+  ctx.lineTo(tx(ts[ts.length - 1]), pad.t + h);
+  ctx.lineTo(tx(ts[0]), pad.t + h);
+  ctx.closePath();
+  ctx.fillStyle = color === 'var(--accent)'
+    ? 'rgba(94,255,160,0.06)'
+    : color === 'var(--accent2)'
+      ? 'rgba(77,184,255,0.06)'
+      : 'rgba(255,179,71,0.07)';
+  ctx.fill();
+
+  ctx.fillStyle = '#7a8099';
+  ctx.font = `${9 * window.devicePixelRatio}px Space Mono`;
+  ctx.textAlign = 'right';
+  ctx.fillText(maxY.toFixed(2), pad.l - 6, pad.t + 6);
+  ctx.fillText(minY.toFixed(2), pad.l - 6, pad.t + h);
+  ctx.textAlign = 'left';
+  ctx.fillText(`${minT.toFixed(1)}s`, pad.l, H - 6);
+  ctx.textAlign = 'right';
+  ctx.fillText(`${maxT.toFixed(1)}s`, pad.l + w, H - 6);
+  ctx.textAlign = 'left';
+  ctx.fillText(yLabel, 10, 16);
+}
+
+function drawEmptyCharts() {
+  drawChart('chart-energy', [], [], 'var(--accent)', 'Energy');
+  drawChart('chart-accel', [], [], 'var(--accent2)', '|a|');
+  drawChart('chart-pos', [], [], 'var(--warn)', 'Position');
+}
+
+function updateMetrics(analysis) {
+  $('metrics-grid').style.display = 'grid';
+  const drift = analysis.metrics.energyDrift * 100;
+  $('m-edrift').textContent = `${drift.toFixed(1)}%`;
+  $('m-edrift').className = `m-val ${drift < 5 ? 'good' : drift < 15 ? 'warn' : 'danger'}`;
+
+  $('m-events').textContent = analysis.events.length;
+  $('m-events').className = `m-val ${analysis.events.length === 0 ? 'good' : analysis.events.length < 4 ? 'warn' : 'danger'}`;
+
+  const accel = analysis.metrics.accelRatio || 0;
+  $('m-accel').textContent = accel ? `${accel.toFixed(1)}×` : 'N/A';
+  $('m-accel').className = `m-val ${accel < 4 ? 'good' : accel < 8 ? 'warn' : 'danger'}`;
+
+  const stiff = analysis.metrics.stiffnessIndex;
+  $('m-stiff').textContent = stiff.toFixed(2);
+  $('m-stiff').className = `m-val ${stiff < 0.22 ? 'good' : stiff < 0.45 ? 'warn' : 'danger'}`;
+}
+
+function formatAIText(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/^[-•]\s+(.+)$/gm, '<div class="fix-item"><span class="fix-icon">→</span><span>$1</span></div>')
+    .replace(/^\d+\.\s+(.+)$/gm, '<div class="fix-item"><span class="fix-icon">→</span><span>$1</span></div>')
+    .replace(/\n\n/g, '<br /><br />')
+    .replace(/\n/g, '<br />');
+}
+
+function addChatMsg(role, content, isHTML = false) {
+  const area = $('chat-area');
+  const wrapper = document.createElement('div');
+  wrapper.className = `msg ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `msg-avatar ${role === 'user' ? 'user' : 'ai'}`;
+  avatar.textContent = role === 'user' ? '👤' : '⚛';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  if (isHTML) bubble.innerHTML = content;
+  else bubble.textContent = content;
+
+  // For user messages, append bubble first then avatar so row-reverse CSS works correctly on all browsers
+  if (role === 'user') {
+    wrapper.appendChild(bubble);
+    wrapper.appendChild(avatar);
+  } else {
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(bubble);
+  }
+  area.appendChild(wrapper);
+  area.scrollTop = area.scrollHeight;
+  if (role === 'assistant') {
+    appState.lastAssistantText = isHTML ? stripHTMLForSpeech(content) : content;
+  }
+  return bubble;
+}
+
+function addTyping() {
+  const area = $('chat-area');
+  const box = document.createElement('div');
+  box.className = 'msg';
+  box.id = 'typing-indicator';
+  box.innerHTML = '<div class="msg-avatar ai">⚛</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  area.appendChild(box);
+  area.scrollTop = area.scrollHeight;
+}
+function removeTyping() {
+  const el = $('typing-indicator');
+  if (el) el.remove();
+}
+
+function buildPresenterSummary(config, analysis) {
+  const topCause = analysis.rootCauses?.[0]?.cause || 'No major root cause';
+  const topFix = analysis.fixes?.[0]?.action || 'No action needed';
+  const tone = analysis.overallScore >= 80 ? 'healthy' : analysis.overallScore >= 50 ? 'borderline' : 'failing';
+  return `
+    <span class="badge-pill ${analysis.overallScore >= 80 ? 'good' : analysis.overallScore >= 50 ? 'warn' : 'danger'}">${tone} system</span>
+    <br /><br />
+    <strong>This run scored ${analysis.overallScore.toFixed(0)}/100.</strong> The most likely issue is <strong>${topCause}</strong>. The fastest repair is to <strong>${topFix}</strong>.<br /><br />
+    In presentation terms: the tool is not just plotting data — it is turning raw simulation behavior into an explainable diagnosis and a ranked fix path.
+  `;
+}
+
+function buildDetailedSummary(config, analysis, result) {
+  const events = analysis.events.length
+    ? analysis.events.map((e) => `- ${e.kind} at ${e.t.toFixed(3)}s (severity ${(e.severity * 100).toFixed(0)}%)`).join('\n')
+    : '- none';
+  const fixes = analysis.fixes.map((f) => `- [${f.priority}] ${f.action} (${f.why})`).join('\n');
+  return [
+    'AI PHYSICS DEBUGGER REPORT',
+    '==========================',
+    `System: ${config.system === 'spring_mass' ? 'Spring-Mass Chain' : config.system === 'double_pendulum' ? 'Double Pendulum' : 'Damped Pendulum'}`,
+    `Integrator: ${config.integrator}`,
+    `dt: ${config.dt.toFixed(3)}`,
+    `Damping: ${config.params.damping.toFixed(2)}`,
+    `Stiffness k: ${config.params.k.toFixed(1)}`,
+    `Duration: ${config.tEnd.toFixed(1)}s`,
+    '',
+    `Overall score: ${analysis.overallScore.toFixed(1)}/100`,
+    `Energy drift: ${(analysis.metrics.energyDrift * 100).toFixed(2)}%`,
+    `Explosion ratio: ${analysis.metrics.explosionRatio.toFixed(2)}x`,
+    `Oscillation ratio: ${analysis.metrics.oscRatio.toFixed(2)}x`,
+    `Accel spike ratio: ${analysis.metrics.accelRatio ? analysis.metrics.accelRatio.toFixed(2) : 'N/A'}x`,
+    `Stiffness index: ${analysis.metrics.stiffnessIndex.toFixed(2)}`,
+    '',
+    'Detected events:',
+    events,
+    '',
+    'Top root causes:',
+    ...analysis.rootCauses.map((c, i) => `${i + 1}. ${c.cause} (${(c.confidence * 100).toFixed(0)}%)`),
+    '',
+    'Recommended fixes:',
+    fixes,
+    '',
+    'Completion:',
+    result.completed ? 'Simulation finished full duration.' : `Simulation aborted early: ${result.abortReason || 'unknown reason'}`
+  ].join('\n');
+}
+
+function localDiagnosisText(config, analysis) {
+  const health = analysis.overallScore >= 80
+    ? '**Overall health: stable.** The solver stayed well-behaved for this run.'
+    : analysis.overallScore >= 50
+      ? '**Overall health: marginal.** The system runs, but numerical error is building up.'
+      : '**Overall health: unstable.** The simulation is showing clear signs of divergence.';
+
+  const cause = analysis.rootCauses[0];
+  const fixes = analysis.fixes.slice(0, 3).map((f) => `- ${f.action}`);
+  const details = [];
+
+  if (analysis.metrics.energyDrift > 0.05) {
+    details.push(`Energy drift reached **${(analysis.metrics.energyDrift * 100).toFixed(1)}%**, which means the integrator is not preserving system energy well.`);
+  }
+  if (analysis.metrics.oscRatio > 1.15) {
+    details.push(`The oscillation envelope grew by **${analysis.metrics.oscRatio.toFixed(2)}×**, which points to either low damping or timestep-driven pumping.`);
+  }
+  if (analysis.metrics.accelRatio > 5) {
+    details.push(`Acceleration spikes hit **${analysis.metrics.accelRatio.toFixed(1)}×** the median level, which is a classic stiff-system warning.`);
+  }
+  if (analysis.metrics.earlyAbort) {
+    details.push(`The run stopped early because **${analysis.metrics.abortReason || 'the state diverged'}**.`);
+  }
+
+  return [
+    health,
+    '',
+    cause ? `**Most likely root cause:** ${cause.cause}.` : '',
+    details.join(' '),
+    '',
+    '**Best next fixes:**',
+    ...fixes
+  ].filter(Boolean).join('\n');
+}
+
+function answerGeneralQuestion(q) {
+  const msg = q.toLowerCase();
+  if (msg.includes('euler')) {
+    return '**Euler** is simple, but it is usually the first integrator to go unstable. It updates position using the old derivative only, so error compounds quickly, especially in stiff or oscillatory systems.';
+  }
+  if (msg.includes('energy drift')) {
+    return '**Energy drift** means the simulation is gradually adding or removing energy that should not be there. In practice, it is a warning that the integrator, timestep, or solver choice is distorting the physics.';
+  }
+  if (msg.includes('verlet')) {
+    return '**Velocity-Verlet** is a strong default for motion problems because it tends to preserve long-term structure better than Euler. It is great when you want stable-looking dynamics without huge cost.';
+  }
+  if (msg.includes('rk4')) {
+    return '**RK4** is accurate per step and often a good rescue option, especially when you can afford a smaller timestep. It does not preserve energy structure the same way Verlet can, but it is far better than raw Euler.';
+  }
+  if (msg.includes('double pendulum') || msg.includes('chaos')) {
+    return 'A **double pendulum** is a chaotic system, so tiny changes in state can create very different trajectories. It is a great stress test because the motion stays physically plausible while still being hard to integrate cleanly.';
+  }
+  if (msg.includes('upload')) {
+    return 'The **upload mode** lets you analyze external logs instead of only the built-in simulator. Use CSV columns `t,primary,energy,accel` or a JSON object with arrays `ts`, `primary`, `energies`, and `accels`.';
+  }
+  if (msg.includes('compare')) {
+    return 'The **integrator comparison lab** reruns the same scenario with Euler, Semi-Implicit Euler, Velocity-Verlet, and RK4 so you can show which solver stays healthiest on the same physics problem.';
+  }
+  if (msg.includes('stiff')) {
+    return 'A **stiff system** has dynamics that change on very different time scales. In a UI like this, it usually shows up as acceleration spikes, timestep sensitivity, and explosions when dt is too large.';
+  }
+  if (msg.includes('judge') || msg.includes('present')) {
+    return 'Tell judges this: **the tool does three things** — it detects instability, explains the probable cause, and recommends the fastest repair. That makes it more useful than a generic simulator or a generic chatbot.';
+  }
+  return 'I can help with integrators, damping, energy drift, stiffness, resonance, or your latest simulation result. Ask me something specific and I’ll answer from the physics side, not just the UI side.';
+}
+
+function answerQuestion(msg) {
+  const hasSim = !!appState.analysisResult;
+  if (!hasSim) return answerGeneralQuestion(msg);
+
+  const q = msg.toLowerCase();
+  const analysis = appState.analysisResult;
+  const config = appState.config;
+
+  if (q.includes('latest') || q.includes('this simulation') || q.includes('what should i change') || q.includes('what first') || q.includes('diagnose') || q.includes('explain my')) {
+    return localDiagnosisText(config, analysis);
+  }
+  if (q.includes('judge') || q.includes('simple') || q.includes('present')) {
+    return `**Simple explanation for judges:** this run scored **${analysis.overallScore.toFixed(0)}/100**. The main issue is **${analysis.rootCauses[0]?.cause || 'minor numerical error'}**. The quickest improvement is to **${analysis.fixes[0]?.action || 'keep the current stable setup'}**.`;
+  }
+  if (q.includes('best integrator')) {
+    if (analysis.metrics.stiffnessIndex > 0.35) {
+      return 'For this case, I would start with **RK4** for robustness or **Velocity-Verlet** if you want better long-term behavior. I would avoid Euler here.';
+    }
+    return 'For this case, **Velocity-Verlet** is a strong choice because it stays stable without being too expensive. RK4 is also good if you want extra accuracy.';
+  }
+  if (q.includes('energy drift')) {
+    return `This run had **${(analysis.metrics.energyDrift * 100).toFixed(1)}% energy drift**. That is ${analysis.metrics.energyDrift < 0.05 ? 'pretty controlled' : analysis.metrics.energyDrift < 0.15 ? 'noticeable and worth explaining' : 'large enough to be a headline problem in the diagnosis'}.`;
+  }
+  if (q.includes('why') && q.includes('unstable')) {
+    return localDiagnosisText(config, analysis);
+  }
+  return `${localDiagnosisText(config, analysis)}\n\nAlso: ${answerGeneralQuestion(msg)}`;
+}
+
+
+function stripHTMLForSpeech(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent || div.innerText || '').trim();
+}
+
+async function fileToDataURL(file) {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function getGeminiImageDataURL() {
+  const fileInput = $('img-upload');
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    return await fileToDataURL(fileInput.files[0]);
+  }
+  const canvas = $('chart-energy');
+  try {
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    return null;
+  }
+}
+
+async function callGeminiBackend(payload) {
+  const resp = await fetch(GEMINI_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) {
+    let detail = '';
+    try {
+      const err = await resp.json();
+      detail = err.detail || '';
+    } catch (_) {}
+    throw new Error(detail || `HTTP ${resp.status}`);
+  }
+  return await resp.json();
+}
+
+async function voicePrompt() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    addChatMsg('assistant', 'Voice input is not available in this browser. Type your question instead.');
+    return;
+  }
+  const rec = new SR();
+  rec.lang = 'en-US';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  rec.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    $('chat-input').value = transcript;
+    sendChat();
+  };
+  rec.onerror = () => addChatMsg('assistant', 'Voice input failed. Please type the question instead.');
+  rec.start();
+}
+
+function speakLastAssistant() {
+  if (!('speechSynthesis' in window)) {
+    addChatMsg('assistant', 'Speech output is not available in this browser.');
+    return;
+  }
+  const text = appState.lastAssistantText || 'Run or ask something first so I have a reply to read aloud.';
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  window.speechSynthesis.speak(utterance);
+}
+
+function buildGeminiPayload(userQuestion='') {
+  const analysis = appState.analysisResult;
+  const config = appState.config;
+  if (!analysis || !config) return null;
+  return {
+    user_question: userQuestion,
+    config,
+    analysis,
+    summary: buildDetailedSummary(config, analysis, appState.simResult),
+    presenter_summary: stripHTMLForSpeech(buildPresenterSummary(config, analysis)),
+    mode_hint: userQuestion ? 'chat' : 'post_run'
+  };
+}
+
+function sendChat() {
+  const input = $('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  sendQ(msg);
+}
+
+
+async function sendQ(msg) {
+  $('chat-send').disabled = true;
+  addChatMsg('user', msg);
+  addTyping();
+
+  try {
+    const basePayload = buildGeminiPayload(msg);
+    if (basePayload) {
+      basePayload.image_data_url = await getGeminiImageDataURL();
+      const data = await callGeminiBackend(basePayload);
+      removeTyping();
+      addChatMsg('assistant', formatAIText(data.text), true);
+      appState.lastMode = 'gemini';
+    } else {
+      throw new Error('No simulation context available yet');
+    }
+  } catch (err) {
+    removeTyping();
+    const answer = answerQuestion(msg);
+    addChatMsg('assistant', formatAIText(answer), true);
+    appState.lastMode = 'local';
+  } finally {
+    $('chat-send').disabled = false;
+  }
+}
+
+
+function renderLab() {
+  const state = appState.labState;
+  const blocks = [];
+
+  if (state.compare && state.compare.length) {
+    blocks.push(`
+      <div class="lab-card">
+        <h4>Integrator leaderboard</h4>
+        <table class="lab-table">
+          <thead><tr><th>Integrator</th><th>Score</th><th>Drift</th><th>Events</th><th>Status</th></tr></thead>
+          <tbody>
+            ${state.compare.map((row) => `<tr><td>${row.integrator}</td><td>${row.score.toFixed(1)}</td><td>${(row.energyDrift * 100).toFixed(1)}%</td><td>${row.events}</td><td>${row.status}</td></tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="helper">Top performer: <strong>${state.compare[0].integrator}</strong> with score <strong>${state.compare[0].score.toFixed(1)}</strong>.</div>
+      </div>
+    `);
+  }
+
+  if (state.sweep && state.sweep.rows && state.sweep.rows.length) {
+    blocks.push(`
+      <div class="lab-card">
+        <h4>dt sweep</h4>
+        <table class="lab-table">
+          <thead><tr><th>dt</th><th>Score</th><th>Drift</th><th>Outcome</th></tr></thead>
+          <tbody>
+            ${state.sweep.rows.map((row) => `<tr><td>${row.dt.toFixed(3)}</td><td>${row.score.toFixed(1)}</td><td>${(row.energyDrift * 100).toFixed(1)}%</td><td>${row.status}</td></tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="helper">Recommended stable dt: <strong>${state.sweep.recommended ? state.sweep.recommended.toFixed(3) : 'No safe point found'}</strong>.</div>
+      </div>
+    `);
+  }
+
+  if (state.upload) {
+    blocks.push(`
+      <div class="lab-card">
+        <h4>Uploaded log analysis</h4>
+        <div class="helper">${state.upload.summary}</div>
+        <div class="stat-strip">
+          <span class="badge-pill ${state.upload.score >= 80 ? 'good' : state.upload.score >= 50 ? 'warn' : 'danger'}">score ${state.upload.score.toFixed(0)}</span>
+          <span class="badge-pill warn">points ${state.upload.points}</span>
+          <span class="badge-pill good">source ${state.upload.format}</span>
+        </div>
+      </div>
+    `);
+  }
+
+  $('lab-content').innerHTML = blocks.length ? `<div class="lab-grid">${blocks.join('')}</div>` : '<div class="empty-state"><div class="icon">🧪</div>Run an integrator comparison, dt sweep, or upload an external log to unlock the Level 2 lab.</div>';
+}
+
+function analyzeResultBundle(result, config) {
+  const analysis = Physics.analyze(result, config);
+  return analysis ? { result, analysis, config } : null;
+}
+
+function compareIntegrators() {
+  const base = readConfig();
+  const integrators = ['euler', 'semi_euler', 'verlet', 'rk4'];
+  const rows = [];
+  for (const integrator of integrators) {
+    const cfg = JSON.parse(JSON.stringify(base));
+    cfg.integrator = integrator;
+    const res = Physics.simulate(cfg);
+    const analysis = Physics.analyze(res, cfg);
+    if (!analysis) continue;
+    rows.push({
+      integrator,
+      score: analysis.overallScore,
+      energyDrift: analysis.metrics.energyDrift,
+      events: analysis.events.length,
+      status: analysis.overallScore >= 80 ? 'stable' : analysis.overallScore >= 50 ? 'marginal' : 'unstable'
+    });
+  }
+  rows.sort((a, b) => b.score - a.score);
+  appState.labState.compare = rows;
+  renderLab();
+  switchTab('tab-lab');
+  if (rows[0]) addChatMsg('assistant', formatAIText(`**Integrator comparison complete.**
+
+Best result: **${rows[0].integrator}** with score **${rows[0].score.toFixed(1)}**. This is a strong demo feature because it proves the tool can compare solver choices on the same scenario.`), true);
+}
+
+function runDtSweep() {
+  const base = readConfig();
+  const candidates = [0.005, 0.01, 0.02, 0.03, 0.05, 0.08, 0.12].filter((dt) => dt <= 0.15);
+  const rows = [];
+  for (const dt of candidates) {
+    const cfg = JSON.parse(JSON.stringify(base));
+    cfg.dt = dt;
+    const res = Physics.simulate(cfg);
+    const analysis = Physics.analyze(res, cfg);
+    if (!analysis) continue;
+    rows.push({
+      dt,
+      score: analysis.overallScore,
+      energyDrift: analysis.metrics.energyDrift,
+      status: analysis.overallScore >= 80 ? 'stable' : analysis.overallScore >= 50 ? 'marginal' : 'unstable'
+    });
+  }
+  rows.sort((a, b) => a.dt - b.dt);
+  const stableRows = rows.filter((r) => r.score >= 80);
+  appState.labState.sweep = { rows, recommended: stableRows.length ? stableRows[stableRows.length - 1].dt : null };
+  renderLab();
+  switchTab('tab-lab');
+  addChatMsg('assistant', formatAIText(`**dt sweep complete.**
+
+${stableRows.length ? `Largest still-stable timestep found: **${stableRows[stableRows.length - 1].dt.toFixed(3)}**.` : 'No dt in the sweep stayed safely stable, which means the current setup is very demanding.'}`), true);
+}
+
+function loadSampleUpload() {
+  const sample = ['t,primary,energy,accel','0.0,0.10,1.00,0.30','0.1,0.12,1.02,0.35','0.2,0.15,1.05,0.40','0.3,0.21,1.20,0.90','0.4,0.35,1.55,1.80'].join('\n');
+  downloadFile('sample_simulation_upload.csv', sample, 'text/csv');
+}
+
+async function analyzeUploadedData() {
+  const fileInput = $('sim-upload');
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) {
+    addChatMsg('assistant', 'Choose a CSV or JSON file first, then click Analyze Upload.');
+    return;
+  }
+
+  const text = await file.text();
+  let parsed;
+  let format = 'csv';
+  try {
+    if (file.name.toLowerCase().endsWith('.json')) {
+      format = 'json';
+      const obj = JSON.parse(text);
+      const ts = obj.ts || obj.time || [];
+      const primary = obj.primary || obj.position || obj.angle || [];
+      const energies = obj.energies || obj.energy || primary.map((v) => Math.abs(v));
+      const accels = obj.accels || obj.accel || primary.map((_, i, arr) => i === 0 ? 0 : Math.abs(arr[i] - arr[i - 1]));
+      parsed = { ts, primary, energies, accels, xs: primary.map((v) => [v]), abortReason: '', completed: true };
+    } else {
+      const rows = text.trim().split(/\r?\n/).map((line) => line.split(',').map((x) => x.trim()));
+      const header = rows[0].map((x) => x.toLowerCase());
+      const hasHeader = header.includes('t') || header.includes('time') || header.includes('primary');
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+      const idxT = hasHeader ? (header.indexOf('t') >= 0 ? header.indexOf('t') : header.indexOf('time')) : 0;
+      const idxP = hasHeader ? (header.indexOf('primary') >= 0 ? header.indexOf('primary') : 1) : 1;
+      const idxE = hasHeader ? header.indexOf('energy') : 2;
+      const idxA = hasHeader ? header.indexOf('accel') : 3;
+      const ts = [], primary = [], energies = [], accels = [];
+      dataRows.forEach((row, i) => {
+        const t = parseFloat(row[idxT]);
+        const p = parseFloat(row[idxP]);
+        if (!Number.isFinite(t) || !Number.isFinite(p)) return;
+        ts.push(t);
+        primary.push(p);
+        energies.push(idxE >= 0 && Number.isFinite(parseFloat(row[idxE])) ? parseFloat(row[idxE]) : Math.abs(p));
+        accels.push(idxA >= 0 && Number.isFinite(parseFloat(row[idxA])) ? parseFloat(row[idxA]) : (i === 0 ? 0 : Math.abs(p - primary[i - 1])));
+      });
+      parsed = { ts, primary, energies, accels, xs: primary.map((v) => [v]), abortReason: '', completed: true };
+    }
+  } catch (err) {
+    addChatMsg('assistant', `Could not parse the uploaded file: ${err.message}`);
+    return;
+  }
+
+  if (!parsed || !parsed.ts || parsed.ts.length < 5) {
+    addChatMsg('assistant', 'The uploaded file does not have enough usable points. Aim for at least 5 rows.');
+    return;
+  }
+
+  const cfg = readConfig();
+  const analysis = Physics.analyze(parsed, cfg);
+  if (!analysis) {
+    addChatMsg('assistant', 'I could read the upload, but there was not enough structured information to analyze it.');
+    return;
+  }
+
+  appState.config = cfg;
+  appState.simResult = parsed;
+  appState.analysisResult = analysis;
+  appState.labState.upload = {
+    score: analysis.overallScore,
+    points: parsed.ts.length,
+    format,
+    summary: `Uploaded data analyzed with score ${analysis.overallScore.toFixed(1)}. Most likely issue: ${analysis.rootCauses[0]?.cause || 'none detected'}.`
+  };
+
+  setScore(analysis.overallScore);
+  updateMetrics(analysis);
+  renderCategoryBars(analysis.catScores);
+  renderEvents(analysis.events);
+  renderCauses(analysis.rootCauses, analysis.fixes);
+  $('presentation-summary').innerHTML = buildPresenterSummary(cfg, analysis);
+  drawChart('chart-energy', parsed.ts, parsed.energies, 'var(--accent)', 'Energy');
+  drawChart('chart-accel', parsed.ts.slice(0, parsed.accels.length), parsed.accels, 'var(--accent2)', '|a|');
+  drawChart('chart-pos', parsed.ts, parsed.primary, 'var(--warn)', cfg.system === 'spring_mass' ? 'Position' : 'Angle');
+  renderLab();
+  switchTab('tab-lab');
+  addChatMsg('assistant', formatAIText(`**Uploaded log analyzed.**
+
+I treated the external data as a simulation trace, scored it, extracted events, and folded the results into the same debugging workflow as the built-in simulator.`), true);
+}
+
+function autoFixConfig() {
+  const config = readConfig();
+  const analysis = appState.analysisResult;
+
+  let newDt = config.dt;
+  let newIntegrator = config.integrator;
+  let newDamping = config.params.damping;
+
+  if (analysis) {
+    if (analysis.metrics.stiffnessIndex > 0.45 || analysis.metrics.earlyAbort || analysis.metrics.explosionRatio > 4) {
+      newDt *= 0.5;
+    } else if (analysis.metrics.stiffnessIndex > 0.3) {
+      newDt *= 0.65;
+    }
+    if (config.integrator === 'euler') {
+      newIntegrator = analysis.metrics.stiffnessIndex > 0.35 ? 'rk4' : 'verlet';
+    }
+    if (analysis.metrics.oscRatio > 1.1 && newDamping < 0.12) {
+      newDamping = Math.max(0.12, newDamping + 0.1);
+    }
+  } else {
+    if (config.integrator === 'euler') newIntegrator = 'verlet';
+    if (config.dt > 0.05) newDt = config.dt * 0.6;
+    if (config.params.damping < 0.1) newDamping = 0.15;
+  }
+
+  newDt = Math.max(0.001, Math.min(0.15, Number(newDt.toFixed(3))));
+  newDamping = Math.max(0, Math.min(2, Number(newDamping.toFixed(2))));
+
+  $('sel-integrator').value = newIntegrator;
+  $('sl-dt').value = newDt;
+  $('lbl-dt').textContent = newDt.toFixed(3);
+  $('sl-damp').value = newDamping;
+  $('lbl-damp').textContent = newDamping.toFixed(2);
+
+  UI.previewRisk();
+  addChatMsg('assistant', formatAIText(`**Auto-fix updated the setup.**\n\n- Integrator → ${newIntegrator}\n- dt → ${newDt.toFixed(3)}\n- damping → ${newDamping.toFixed(2)}\n\nRun the simulation again to verify the improvement.`), true);
+}
+
+function runSim() {
+  if (appState.running) return;
+  appState.running = true;
+  $('btn-run').disabled = true;
+  $('btn-run-text').innerHTML = '<span class="spin"></span> Simulating…';
+
+  setTimeout(() => {
+    const config = readConfig();
+    const result = Physics.simulate(config);
+    const analysis = Physics.analyze(result, config);
+    appState.config = config;
+    appState.simResult = result;
+    appState.analysisResult = analysis;
+
+    if (!analysis) {
+      addChatMsg('assistant', 'The simulation did not generate enough data to analyze. Try increasing the duration or reducing dt.');
+      appState.running = false;
+      $('btn-run').disabled = false;
+      $('btn-run-text').textContent = '▶ Run & Analyze';
+      return;
+    }
+
+    setScore(analysis.overallScore);
+    updateMetrics(analysis);
+    renderCategoryBars(analysis.catScores);
+    renderEvents(analysis.events);
+    renderCauses(analysis.rootCauses, analysis.fixes);
+
+    drawChart('chart-energy', result.ts, result.energies, 'var(--accent)', 'Energy');
+    const accelTs = result.ts.slice(1, result.accels.length + 1);
+    drawChart('chart-accel', accelTs, result.accels, analysis.metrics.accelRatio > 6 ? 'var(--warn)' : 'var(--accent2)', '|a|');
+    drawChart('chart-pos', result.ts, result.primary, 'var(--warn)', config.system === 'spring_mass' ? 'Position' : 'Angle');
+
+    $('presentation-summary').innerHTML = buildPresenterSummary(config, analysis);
+    renderLab();
+
+    addTyping();
+    (async () => {
+      try {
+        const payload = buildGeminiPayload('');
+        if (payload) payload.image_data_url = await getGeminiImageDataURL();
+        const data = await callGeminiBackend(payload);
+        removeTyping();
+        addChatMsg('assistant', formatAIText(data.text), true);
+        appState.lastMode = 'gemini';
+      } catch (err) {
+        removeTyping();
+        addChatMsg('assistant', formatAIText(localDiagnosisText(config, analysis)), true);
+        appState.lastMode = 'local';
+      } finally {
+        switchTab('tab-ai');
+        appState.running = false;
+        $('btn-run').disabled = false;
+        $('btn-run-text').textContent = '▶ Run & Analyze';
+      }
+    })();
+  }, 40);
+}
+
+function exportJSON() {
+  if (!appState.simResult || !appState.analysisResult) {
+    addChatMsg('assistant', 'Run a simulation first, then export the results.');
+    return;
+  }
+  // Omit xs (full state snapshots) to keep file size manageable
+  const { xs, ...resultSummary } = appState.simResult;
+  const payload = {
+    config: appState.config,
+    analysis: appState.analysisResult,
+    result: resultSummary
+  };
+  downloadFile('ai_physics_debugger_result.json', JSON.stringify(payload, null, 2), 'application/json');
+}
+
+function exportReport() {
+  if (!appState.simResult || !appState.analysisResult) {
+    addChatMsg('assistant', 'Run a simulation first, then export the report.');
+    return;
+  }
+  const text = buildDetailedSummary(appState.config, appState.analysisResult, appState.simResult);
+  downloadFile('ai_physics_debugger_report.txt', text, 'text/plain');
+}
+
+function downloadFile(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function redrawCharts() {
+  if (!appState.simResult || !appState.analysisResult) {
+    drawEmptyCharts();
+    return;
+  }
+  requestAnimationFrame(() => {
+    drawChart('chart-energy', appState.simResult.ts, appState.simResult.energies, 'var(--accent)', 'Energy');
+    drawChart('chart-accel', appState.simResult.ts.slice(1, appState.simResult.accels.length + 1), appState.simResult.accels, appState.analysisResult.metrics.accelRatio > 6 ? 'var(--warn)' : 'var(--accent2)', '|a|');
+    drawChart('chart-pos', appState.simResult.ts, appState.simResult.primary, 'var(--warn)', appState.config.system === 'spring_mass' ? 'Position' : 'Angle');
+  });
+}
+
+window.addEventListener('resize', redrawCharts);
+
+UI.init();
+</script>
+</body>
+</html>
